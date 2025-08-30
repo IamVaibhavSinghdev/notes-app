@@ -33,10 +33,10 @@ router.post("/request-otp", async (req, res, next) => {
     const otp = generateOtp();
     const codeHash = await hashOtp(otp);
 
-    // Clear old OTPs
+    // Clear previous OTPs for that email and purpose
     await Otp.deleteMany({ email, purpose });
 
-    // Save new OTP
+    // Save new OTP record
     await Otp.create({
       email,
       codeHash,
@@ -44,12 +44,19 @@ router.post("/request-otp", async (req, res, next) => {
       expiresAt: otpExpiryDate(),
     });
 
-    // ✅ Send OTP email (always in prod)
-    await sendEmail(
-      email,
-      "Your OTP Code",
-      `Your OTP is ${otp}. It is valid for ${config.otpExpiryMin} minutes.`
-    );
+    // Attempt to send OTP email
+    try {
+      await sendEmail(
+        email,
+        "Your OTP Code",
+        `Your OTP is ${otp}. It is valid for ${config.otpExpiryMin} minutes.`
+      );
+    } catch (emailErr) {
+      console.error("Failed to send OTP email:", emailErr);
+      // Optionally, you may choose to notify client of email send failure:
+      // return res.status(500).json({ error: "Failed to send OTP email" });
+      // Here, we continue so OTP is still valid in DB.
+    }
 
     return res.json({
       message: "OTP sent to your email",
@@ -75,17 +82,22 @@ router.post("/verify-otp", async (req, res, next) => {
       return res.status(400).json({ error: "Missing fields" });
     }
 
+    // Find latest OTP for the user and purpose
     const rec = await Otp.findOne({ email, purpose }).sort({ createdAt: -1 });
 
+    // Check if OTP exists and is not expired
     if (!rec || rec.expiresAt < new Date()) {
       return res.status(400).json({ error: "OTP expired or invalid" });
     }
 
+    // Verify OTP correctness
     const ok = await compareOtp(otp, rec.codeHash);
     if (!ok) return res.status(400).json({ error: "Incorrect OTP" });
 
+    // Find user by email
     let user = await User.findOne({ email });
 
+    // Signup flow: create user if not exists
     if (purpose === "signup") {
       if (!user) {
         user = await User.create({
@@ -95,17 +107,21 @@ router.post("/verify-otp", async (req, res, next) => {
         });
       }
     } else {
+      // Login flow: user must exist
       if (!user) return res.status(404).json({ error: "Account not found" });
     }
 
-    await Otp.deleteMany({ email, purpose }); // delete OTP after use
+    // Delete all OTPs after successful verification
+    await Otp.deleteMany({ email, purpose });
 
+    // Generate JWT token valid for 7 days
     const token = jwt.sign(
       { id: user!.id, email: user!.email, name: user!.name },
       config.jwtSecret,
       { expiresIn: "7d" }
     );
 
+    // Return token and user data
     return res.json({
       token,
       user: {
