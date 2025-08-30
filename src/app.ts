@@ -6,16 +6,25 @@ import { errorHandler } from "./middleware/error";
 
 const app = express();
 
-app.use(cors());
+// ✅ Update CORS to allow your Netlify frontend
+app.use(
+  cors({
+    origin: ["https://effulgent-toffee-39d81c.netlify.app"], // your frontend URL
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
-app.get ("/health", (req, res) => {
-    res.json({ ok : true});
+// Health check route
+app.get("/health", (req, res) => {
+  res.json({ ok: true });
 });
 
 app.use("/auth", authRoutes);
 app.use("/notes", noteRoutes);
-app.use(errorHandler);
 
+// Error handler middleware
+app.use(errorHandler);
 
 export default app;
