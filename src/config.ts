@@ -7,7 +7,9 @@ port: Number(process.env.PORT || 4000),
 mongoUri : process.env.MONGO_URI as string,
 jwtSecret : process.env.JWT_SECRET as string,
 env : process.env.NODE_ENV || "development",
-otpExpiryMin : Number(process.env.OTP_EXP_MIN) || 5
+otpExpiryMin : Number(process.env.OTP_EXP_MIN) || 5,
+ emailUser: process.env.EMAIL_USER || "",
+  emailPass: process.env.EMAIL_PASS || ""
 };
 
 if (!config.mongoUri || !config.jwtSecret ) {
