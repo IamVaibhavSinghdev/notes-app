@@ -1,10 +1,11 @@
 import { Router } from "express";
+import passport from "../utils/googleStrategy"; // your google OAuth strategy config
+import jwt from "jsonwebtoken";
 import Otp from "../models/Otp";
 import User from "../models/User";
-import jwt from "jsonwebtoken";
 import { config } from "../config";
 import { generateOtp, hashOtp, otpExpiryDate, compareOtp } from "../utils/otp";
-import { sendEmail } from "../utils/mailer";   // email sender
+import { sendEmail } from "../utils/mailer"; // email sender
 
 const router = Router();
 
@@ -53,9 +54,7 @@ router.post("/request-otp", async (req, res, next) => {
       );
     } catch (emailErr) {
       console.error("Failed to send OTP email:", emailErr);
-      // Optionally, you may choose to notify client of email send failure:
-      // return res.status(500).json({ error: "Failed to send OTP email" });
-      // Here, we continue so OTP is still valid in DB.
+      // Continue despite email failure
     }
 
     return res.json({
@@ -135,5 +134,27 @@ router.post("/verify-otp", async (req, res, next) => {
     next(e);
   }
 });
+
+// Start Google login
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+// Google callback route
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false }),
+  (req: any, res) => {
+    const user = req.user;
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET!,
+      { expiresIn: "7d" }
+    );
+    // Redirect to frontend with token in query params
+    res.redirect(`${process.env.FRONTEND_URL}/signin?token=${token}`);
+  }
+);
 
 export default router;

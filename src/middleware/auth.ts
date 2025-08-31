@@ -1,36 +1,26 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 import jwt from "jsonwebtoken";
-import { config } from "../config";
 
 export interface AuthedRequest extends Request {
-    user? : { id: string; email : string; name: string}; 
+  user?: any;
 }
-export function authRequired(req: AuthedRequest, res: Response, next: NextFunction) {
 
-  const header = req.headers.authorization;
-
-  if (!header?.startsWith("Bearer ")) {
-
-    return res.status(401).json(
-
-        { error: "Missing token" }
-
-    );
+export const authRequired: RequestHandler = (
+  req: AuthedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ message: "No token provided" });
   }
-  const token = header.split(" ")[1];
 
+  const token = authHeader.split(" ")[1];
   try {
-
-    const payload = jwt.verify(token, config.jwtSecret) as any;
-
-    req.user = { id: payload.id, email: payload.email, name: payload.name };
-    
-    return next();
-
-  } catch {
-
-    return res.status(401).json(
-        { error: "Invalid or expired token" }
-    );
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid token" });
   }
-}
+};

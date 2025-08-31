@@ -1,59 +1,52 @@
-import { Router } from "express";
-import Note from "../models/Note";
+import { Router, RequestHandler } from "express";
 import { authRequired, AuthedRequest } from "../middleware/auth";
+import Note from "../models/Note";
 
 const router = Router();
 
+// ✅ protect all routes with auth middleware
 router.use(authRequired);
 
-// get request for notes 
+// ✅ GET all notes for logged-in user
+router.get(
+  "/",
+  (async (req: AuthedRequest, res) => {
+    try {
+      const notes = await Note.find({ user: req.user.id });
+      res.json(notes);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch notes" });
+    }
+  }) as RequestHandler
+);
 
-router.get("/", async (req: AuthedRequest, res, next) => {
-  try {
-    const notes = await Note.find({ 
-        userId: req.user!.id }).sort({ createdAt: -1 });
-    res.json(notes);
+// ✅ CREATE a note
+router.post(
+  "/",
+  (async (req: AuthedRequest, res) => {
+    try {
+      const note = await Note.create({
+        ...req.body,
+        user: req.user.id,
+      });
+      res.status(201).json(note);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to create note" });
+    }
+  }) as RequestHandler
+);
 
-  } catch (e) { next(e); }
-});
-
-
-// post request to save notes 
-
-router.post("/", async (req: AuthedRequest, res, next) => {
-
-  try {
-
-    const { title, content } = req.body;
-
-    if (!title) return res.status(400).json({ error: "title required" });
-
-    const note = await Note.create({ 
-        userId: req.user!.id, 
-        title, 
-        content: content || "" 
-    });
-
-    res.status(201).json(note);
-  } catch (e) { next(e); }
-});
-
-// delete notes 
-
-router.delete("/:id", async (req: AuthedRequest, res, next) => {
-  try {
-    const { id } = req.params;
-
-    const deleted = await Note.findOneAndDelete({ 
-        _id: id, 
-        userId: req.user!.id 
-    });
-
-    if (!deleted) return res.status(404).json({ error: "Note not found" });
-
-    res.json({ ok: true });
-    
-  } catch (e) { next(e); }
-});
+// ✅ DELETE a note
+router.delete(
+  "/:id",
+  (async (req: AuthedRequest, res) => {
+    try {
+      await Note.findOneAndDelete({ _id: req.params.id, user: req.user.id });
+      res.json({ message: "Note deleted" });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete note" });
+    }
+  }) as RequestHandler
+);
 
 export default router;

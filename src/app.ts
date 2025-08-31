@@ -3,6 +3,7 @@ import cors from "cors";
 import authRoutes from "./routes/auth.routes";
 import noteRoutes from "./routes/note.routes";
 import { errorHandler } from "./middleware/error";
+import googleAuthRoutes from "./routes/auth.routes";
 
 const app = express();
 
@@ -23,7 +24,7 @@ app.get("/health", (req, res) => {
 
 app.use("/auth", authRoutes);
 app.use("/notes", noteRoutes);
-
+app.use("/api/auth", googleAuthRoutes);
 // Error handler middleware
 app.use(errorHandler);
 
