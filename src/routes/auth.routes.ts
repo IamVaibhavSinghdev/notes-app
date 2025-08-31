@@ -155,7 +155,7 @@ router.get(
       { expiresIn: "7d" }
     );
     // Redirect to frontend with token in query params
-    res.redirect(`${process.env.FRONTEND_URL}/dashboard?token=${token}`);
+    res.redirect(`${process.env.FRONTEND_URL}/signin?token=${token}`);
   }
 );
 
