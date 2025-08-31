@@ -23,7 +23,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/auth", authRoutes);
-app.use("/api/auth", authRoutes);
+// app.use("/api/auth", authRoutes);
 app.use("/notes", noteRoutes);
 //app.use("/api/auth", googleAuthRoutes);
 // Error handler middleware
