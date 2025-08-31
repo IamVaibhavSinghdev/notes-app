@@ -8,9 +8,10 @@ dotenv.config();
 const options: StrategyOptions = {
   clientID: process.env.GOOGLE_CLIENT_ID as string,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-  callbackURL: "/api/auth/google/callback",
-    passReqToCallback: false
+  callbackURL: `${process.env.BACKEND_URL}/api/auth/google/callback`, // ✅ full URL
+  passReqToCallback: false,
 };
+
 
 passport.use(
   new GoogleStrategy(
