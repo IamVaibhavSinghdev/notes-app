@@ -144,16 +144,18 @@ router.get(
 // Google callback route
 router.get(
   "/google/callback",
-  passport.authenticate("google", { session: false }),
+  passport.authenticate("google", { session: false, failureRedirect: "/login" }),
   (req: any, res) => {
     const user = req.user;
+
+    // Generate JWT
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET!,
       { expiresIn: "7d" }
     );
     // Redirect to frontend with token in query params
-    res.redirect(`${process.env.FRONTEND_URL}/signin?token=${token}`);
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard?token=${token}`);
   }
 );
 
