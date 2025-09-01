@@ -22,7 +22,7 @@ auth.routes.ts note.routes.ts utils/ otp.ts .env .gitignore
 install 2. Configure Environment (.env) PORT=4000 MONGO_URI=your_mongo_uri
 JWT_SECRET=your_jwt_secret NODE_ENV=development OTP_EXP_MIN=5 # Optional for Google
 OAuth GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret FRONTEND_URL=http://localhost:5173 3.
+GOOGLE_CLIENT_SECRET=your_google_client_secret FRONTEND_URL=https://effulgent-toffee-39d81c.netlify.app/signin
 Run the Project npm run dev # Development npm run build # Build npm start # Production
 ■ API Endpoints
 Auth Routes: - POST /auth/request-otp → Request OTP for signup/login - POST /auth/verify-otp →
@@ -42,5 +42,4 @@ Verify OTP, issue JWT, create user - GET /auth/google → Start Google OAuth flo
 - Middleware for auth guard & error handling
 - RESTful route design
 - Git hygiene (.gitignore, no node_modules/.env)
-■ License
-MIT License © 2025 Your Name
+  
